@@ -23,18 +23,17 @@
     "energy-efficiency"
   ],
   "author": {
-    "name": "Your Name",
-    "email": "your.email@example.com",
-    "url": "https://your-portfolio.com"
+    "name": "Naisha Khan",
+    "email": "naishakhan000@gmail.com"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/smart-energy-dashboard.git"
+    "url": "https://github.com/naisha-khan/smart-energy-dashboard.git"
   },
   "homepage": "https://your-deployment-url.vercel.app",
   "bugs": {
-    "url": "https://github.com/yourusername/smart-energy-dashboard/issues"
+    "url": "https://github.com/naisha-khan/smart-energy-dashboard/issues"
   },
   "dependencies": {},
   "devDependencies": {

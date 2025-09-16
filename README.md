@@ -76,7 +76,7 @@ Internet connection for CDN resources
 
 Local Development
 bash# Clone the repository
-git clone https://github.com/yourusername/smart-energy-dashboard.git
+git clone https://github.com/naisha-khan/smart-energy-dashboard.git
 
 # Navigate to project directory
 cd smart-energy-dashboard
