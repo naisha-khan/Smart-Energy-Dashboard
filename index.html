@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Energy Monitoring Dashboard - PowerTech Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f766e 0%, #059669 50%, #10b981 100%);
+        }
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .pulse-dot {
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.1); }
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-online { background-color: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+        .status-warning { background-color: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); }
+        .status-offline { background-color: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+        .metric-trend-up { color: #10b981; }
+        .metric-trend-down { color: #ef4444; }
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .data-source {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans min-h-screen">
+    <!-- Header -->
+    <header class="gradient-bg text-white shadow-xl sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-5">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white bg-opacity-20 p-3 rounded-xl">
+                        <i class="fas fa-bolt text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">Smart Energy Dashboard</h1>
+                        <p class="text-green-200 text-sm">PowerTech Solutions - Enterprise Energy Management</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <div class="text-right">
+                        <p class="text-sm text-green-200">System Status</p>
+                        <div class="flex items-center">
+                            <div class="status-indicator status-online pulse-dot"></div>
+                            <span class="font-semibold">Live Data</span>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-green-200">Last Updated</p>
+                        <p class="font-semibold" id="lastUpdate">--</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Data Source Banner -->
+    <div class="bg-blue-600 text-white px-6 py-2">
+        <div class="container mx-auto flex items-center justify-between text-sm">
+            <div class="flex items-center space-x-4">
+                <i class="fas fa-database"></i>
+                <span><strong>Data Sources:</strong> Industrial IoT Sensors | Smart Meters | Weather API | Grid Analytics</span>
+            </div>
+            <span class="bg-blue-700 px-3 py-1 rounded">Mock Data Simulation</span>
+        </div>
+    </div>
+
+    <!-- Alert Banner -->
+    <div id="alertBanner" class="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-4 shadow-lg hidden">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-exclamation-triangle text-xl"></i>
+                <div>
+                    <p class="font-semibold">Critical Alert</p>
+                    <span id="alertMessage" class="text-sm">System Alert</span>
+                </div>
+            </div>
+            <button onclick="dismissAlert()" class="text-white hover:text-red-200 transition-colors">
+                <i class="fas fa-times text-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="container mx-auto px-6 py-8 space-y-8">
+        <!-- KPI Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
+            <div class="glassmorphism rounded-2xl shadow-lg p-6 card-hover border relative">
+                <div class="data-source">IoT Sensor</div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-3 rounded-xl shadow-lg">
+                        <i class="fas fa-plug text-white text-xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Live Consumption</p>
+                    <p class="text-3xl font-bold text-gray-900 mb-1" id="currentConsumption">245</p>
+                    <p class="text-xs text-gray-500 mb-3">kW</p>
+                    <div class="flex items-center">
+                        <span class="text-sm font-medium metric-trend-up" id="consumptionTrend">+2.3%</span>
+                        <span class="text-gray-500 text-xs ml-2">vs last hour</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glassmorphism rounded-2xl shadow-lg p-6 card-hover border relative">
+                <div class="data-source">Solar/Wind API</div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-gradient-to-r from-green-500 to-green-600 p-3 rounded-xl shadow-lg">
+                        <i class="fas fa-leaf text-white text-xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Renewable Energy</p>
+                    <p class="text-3xl font-bold text-green-600 mb-1" id="renewablePercent">72</p>
+                    <p class="text-xs text-gray-500 mb-3">% of total</p>
+                    <div class="bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-gradient-to-r from-green-400 to-green-500 h-2.5 rounded-full transition-all duration-700" id="renewableProgress" style="width: 72%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glassmorphism rounded-2xl shadow-lg p-6 card-hover border relative">
+                <div class="data-source">Carbon Calculator</div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-gradient-to-r from-emerald-500 to-emerald-600 p-3 rounded-xl shadow-lg">
+                        <i class="fas fa-seedling text-white text-xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">CO₂ Saved Today</p>
+                    <p class="text-3xl font-bold text-green-600 mb-1" id="co2Saved">1,847</p>
+                    <p class="text-xs text-gray-500 mb-3">kg CO₂</p>
+                    <div class="flex items-center">
+                        <span class="text-green-500 text-sm font-medium">↗ 18.5%</span>
+                        <span class="text-gray-500 text-xs ml-2">vs yesterday</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glassmorphism rounded-2xl shadow-lg p-6 card-hover border relative">
+                <div class="data-source">Billing System</div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-3 rounded-xl shadow-lg">
+                        <i class="fas fa-rupee-sign text-white text-xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Monthly Cost</p>
+                    <p class="text-3xl font-bold text-gray-900 mb-1" id="budgetStatus">₹8,45,200</p>
+                    <p class="text-xs text-gray-500 mb-3" id="budgetPercent">68% of budget</p>
+                    <div class="bg-gray-200 rounded-full h-2.5">
+                        <div class="bg-gradient-to-r from-purple-400 to-purple-500 h-2.5 rounded-full transition-all duration-700" id="budgetProgress" style="width: 68%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glassmorphism rounded-2xl shadow-lg p-6 card-hover border relative">
+                <div class="data-source">System Monitor</div>
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-gradient-to-r from-orange-500 to-orange-600 p-3 rounded-xl shadow-lg">
+                        <i class="fas fa-tachometer-alt text-white text-xl"></i>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">System Efficiency</p>
+                    <p class="text-3xl font-bold text-orange-600 mb-1" id="systemEfficiency">94</p>
+                    <p class="text-xs text-gray-500 mb-3">% optimal</p>
+                    <div class="flex items-center">
+                        <span class="text-green-500 text-sm font-medium">↗ 3.2%</span>
+                        <span class="text-gray-500 text-xs ml-2">this week</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Section -->
+        <section class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <!-- Energy Consumption Chart -->
+            <div class="glassmorphism rounded-2xl shadow-lg p-6 card-hover border relative">
+                <div class="data-source">Smart Meters</div>
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Energy Consumption</h3>
+                        <p class="text-gray-600 text-sm">24-hour consumption pattern (kW)</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg text-sm font-medium shadow-md">24h</button>
+                        <button class="px-4 py-2 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">7d</button>
+                        <button class="px-4 py-2 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">30d</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="consumptionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Peak Load Analysis -->
+            <div class="glassmorphism rounded-2xl shadow-lg p-6 card-hover border relative">
+                <div class="data-source">Load Analytics</div>
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Peak Load Analysis</h3>
+                        <p class="text-gray-600 text-sm">Weekly maximum load distribution</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500">Max Load:</span>
+                        <span class="font-bold text-red-500" id="maxLoad">124 kW</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="peakLoadChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Additional Analytics -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Energy Mix Chart -->
+            <div class="glassmorphism rounded-2xl shadow-lg p-6 card-hover border relative">
+                <div class="data-source">Grid + Renewable</div>
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Energy Sources</h3>
+                        <p class="text-gray-600 text-sm">Current energy mix</p>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="energyMixChart"></canvas>
+                </div>
+                <div class="mt-4 space-y-2">
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-green-500 rounded mr-2"></div>
+                            <span>Solar</span>
+                        </div>
+                        <span class="font-medium" id="solarPercent">42%</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-blue-500 rounded mr-2"></div>
+                            <span>Wind</span>
+                        </div>
+                        <span class="font-medium" id="windPercent">28%</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-yellow-500 rounded mr-2"></div>
+                            <span>Grid</span>
+                        </div>
+                        <span class="font-medium" id="gridPercent">22%</span>
+                    </div>
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center">
+                            <div class="w-3 h-3 bg-purple-500 rounded mr-2"></div>
+                            <span>Battery</span>
+                        </div>
+                        <span class="font-medium" id="batteryPercent">8%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Alerts -->
+            <div class="glassmorphism rounded-2xl shadow-lg p-6 card-hover border relative">
+                <div class="data-source">Alert Engine</div>
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">System Alerts</h3>
+                        <p class="text-gray-600 text-sm">Live monitoring alerts</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator status-warning pulse-dot"></div>
+                        <span class="text-sm font-medium" id="activeAlerts">2 Active</span>
+                    </div>
+                </div>
+                <div class="space-y-4 max-h-64 overflow-y-auto" id="alertsList">
+                    <div class="flex items-start space-x-3 p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-400">
+                        <i class="fas fa-exclamation-triangle text-yellow-500 mt-1"></i>
+                        <div>
+                            <p class="font-medium text-gray-900">High Load Alert</p>
+                            <p class="text-sm text-gray-600">Transformer load at 95% - Delhi North Grid</p>
+                            <span class="text-xs text-gray-500">3 min ago</span>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-400">
+                        <i class="fas fa-info-circle text-blue-500 mt-1"></i>
+                        <div>
+                            <p class="font-medium text-gray-900">Maintenance Window</p>
+                            <p class="text-sm text-gray-600">Solar inverter maintenance: 02:00-04:00 IST</p>
+                            <span class="text-xs text-gray-500">1 hour ago</span>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-400">
+                        <i class="fas fa-check-circle text-green-500 mt-1"></i>
+                        <div>
+                            <p class="font-medium text-gray-900">Efficiency Improved</p>
+                            <p class="text-sm text-gray-600">AI optimization completed - 4.2% efficiency gain</p>
+                            <span class="text-xs text-gray-500">2 hours ago</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Equipment Status -->
+            <div class="glassmorphism rounded-2xl shadow-lg p-6 card-hover border relative">
+                <div class="data-source">Equipment IoT</div>
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Equipment Status</h3>
+                        <p class="text-gray-600 text-sm">Real-time equipment health</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-500">Uptime:</span>
+                        <span class="font-bold text-green-500">99.7%</span>
+                    </div>
+                </div>
+                <div class="space-y-4" id="equipmentStatus">
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="status-indicator status-warning"></div>
+                            <span class="font-medium text-gray-900">Main Transformer</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-medium text-gray-600">95% Load</span>
+                            <p class="text-xs text-gray-500">Delhi North</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="status-indicator status-online"></div>
+                            <span class="font-medium text-gray-900">Solar Array</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-medium text-gray-600">85 kW</span>
+                            <p class="text-xs text-gray-500">Optimal</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="status-indicator status-online"></div>
+                            <span class="font-medium text-gray-900">Wind Turbines</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-medium text-gray-600">67 kW</span>
+                            <p class="text-xs text-gray-500">Good Wind</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="status-indicator status-online"></div>
+                            <span class="font-medium text-gray-900">Battery Storage</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-sm font-medium text-gray-600">82% SOC</span>
+                            <p class="text-xs text-gray-500">Charging</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Environmental Impact -->
+        <section class="glassmorphism rounded-2xl shadow-lg p-6 card-hover border relative">
+            <div class="data-source">Environmental API</div>
+            <h3 class="text-xl font-bold text-gray-900 mb-6">Environmental Impact Metrics</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="text-center p-4 bg-green-50 rounded-xl">
+                    <i class="fas fa-tree text-green-500 text-3xl mb-3"></i>
+                    <p class="text-3xl font-bold text-green-600" id="treesEquivalent">1,247</p>
+                    <p class="text-sm text-gray-600">Trees planted equivalent</p>
+                </div>
+                <div class="text-center p-4 bg-blue-50 rounded-xl">
+                    <i class="fas fa-car text-blue-500 text-3xl mb-3"></i>
+                    <p class="text-3xl font-bold text-blue-600" id="carKmOffset">18,450</p>
+                    <p class="text-sm text-gray-600">Car km offset</p>
+                </div>
+                <div class="text-center p-4 bg-purple-50 rounded-xl">
+                    <i class="fas fa-home text-purple-500 text-3xl mb-3"></i>
+                    <p class="text-3xl font-bold text-purple-600" id="homesYear">34</p>
+                    <p class="text-sm text-gray-600">Homes powered/year</p>
+                </div>
+                <div class="text-center p-4 bg-orange-50 rounded-xl">
+                    <i class="fas fa-tint text-orange-500 text-3xl mb-3"></i>
+                    <p class="text-3xl font-bold text-orange-600" id="waterSaved">4,680</p>
+                    <p class="text-sm text-gray-600">Liters water saved</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Mock Data Configuration - Simulating real industrial energy systems
+        const MOCK_DATA_CONFIG = {
+            // Industrial facility in Delhi - 500kW peak capacity
+            facility: {
+                location: "Delhi, India",
+                capacity: "500 kW",
+                type: "Manufacturing Plant"
+            },
+            
+            // Energy consumption patterns based on Indian industrial schedules
+            consumption: {
+                baseLoad: 180, // kW base load
+                peakHours: [8, 9, 10, 14, 15, 16, 20, 21], // Peak industrial hours
+                lowHours: [22, 23, 0, 1, 2, 3, 4, 5], // Low consumption hours
+                variation: 40 // ±40kW variation
+            },
+            
+            // Renewable energy mix typical for Indian grid + private solar
+            renewablesMix: {
+                solar: { base: 40, variation: 15 }, // 40% ±15%
+                wind: { base: 25, variation: 10 },   // 25% ±10%
+                grid: { base: 25, variation: 8 },    // 25% ±8%
+                battery: { base: 10, variation: 5 }   // 10% ±5%
+            },
+            
+            // Indian carbon emission factors (kg CO2/kWh)
+            carbonFactors: {
+                grid: 0.82, // Indian grid average
+                solar: 0.045,
+                wind: 0.015
+            },
+            
+            // Indian energy costs (₹/kWh)
+            energyCosts: {
+                industrial: 7.5, // ₹7.5/kWh industrial tariff
+                renewable: 4.2   // ₹4.2/kWh renewable
+            }
+        };
+
+        // Generate realistic time-series data
+        function generateTimeSeriesData() {
+            const now = new Date();
+            const data = {};
+            
+            // 24-hour consumption data
+            data.hourlyConsumption = Array.from({length: 24}, (_, i) => {
+                const hour = (now.getHours() - 23 + i + 24) % 24;
+                const hourLabel = hour.toString().padStart(2, '0') + ':00';
+                
+                let multiplier = 1;
+                if (MOCK_DATA_CONFIG.consumption.peakHours.includes(hour)) {
+                    multiplier = 1.3; // 30% increase during peak hours
+                } else if (MOCK_DATA_CONFIG.consumption.lowHours.includes(hour)) {
+                    multiplier = 0.7; // 30% decrease during low hours
+                }
+                
+                const consumption = MOCK_DATA_CONFIG.consumption.baseLoad * multiplier + 
+                                 (Math.random() - 0.5) * MOCK_DATA_CONFIG.consumption.variation;
+                
+                return {
+                    label: hourLabel,
+                    value: Math.max(50, consumption) // Minimum 50kW
+                };
+            });
+            
+            // Weekly peak load data
+            data.weeklyPeaks = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => {
+                let baseLoad = 280; // Base peak load
+                // Lower on weekends
+                if (day === 'Sat' || day === 'Sun') baseLoad *= 0.6;
+                
+                return {
+                    label: day,
+                    value: baseLoad + (Math.random() - 0.5) * 60
+                };
+            });
+            
+            // Current energy mix
+            data.energyMix = {};
+            Object.keys(MOCK_DATA_CONFIG.renewablesMix).forEach(source => {
+                const config = MOCK_DATA_CONFIG.renewablesMix[source];
+                data.energyMix[source] = Math.max(0, 
+                    config.base + (Math.random() - 0.5) * config.variation
+                );
+            });
+            
+            // Normalize to 100%
+            const total = Object.values(data.energyMix).reduce((sum, val) => sum + val, 0);
+            Object.keys(data.energyMix).forEach(source => {
+                data.energyMix[source] = (data.energyMix[source] / total) * 100;
+            });
+            
+            return data;
+        }
+
+        // Calculate metrics from mock data
+        function calculateMetrics(data) {
+            const metrics = {};
+            
+            // Current consumption (latest hour)
+            metrics.currentConsumption = Math.round(data.hourlyConsumption[23].value);
+            
+            // Renewable percentage
+            metrics.renewablePercent = Math.round(data.energyMix.solar + data.energyMix.wind);
+            
+            // Daily energy total (24h sum)
+            const dailyTotal = data.hourlyConsumption.reduce((sum, hour) => sum + hour.value, 0);
+            
+            // CO2 savings calculation
+            const gridEmissions = dailyTotal * MOCK_DATA_CONFIG.carbonFactors.grid;
+            const renewableEmissions = dailyTotal * 
+                (data.energyMix.solar/100 * MOCK_DATA_CONFIG.carbonFactors.solar + 
+                 data.energyMix.wind/100 * MOCK_DATA_CONFIG.carbonFactors.wind);
+            metrics.co2Saved = Math.round(gridEmissions - renewableEmissions);
+            
+            // Monthly cost calculation
+            const monthlyConsumption = dailyTotal * 30; // Estimate monthly
+            const renewableRatio = metrics.renewablePercent / 100;
+            const monthlyCost = monthlyConsumption * 
+                (renewableRatio * MOCK_DATA_CONFIG.energyCosts.renewable + 
+                 (1 - renewableRatio) * MOCK_DATA_CONFIG.energyCosts.industrial);
+            metrics.monthlyCost = Math.round(monthlyCost);
+            
+            // System efficiency (based on renewable mix and load factor)
+            const loadFactor = metrics.currentConsumption / 500; // Capacity utilization
+            metrics.systemEfficiency = Math.round(85 + renewableRatio * 10 + Math.random() * 5);
+            
+            // Environmental impact calculations
+            metrics.treesEquivalent = Math.round(metrics.co2Saved * 0.02 * 30); // Monthly equivalent
+            metrics.carKmOffset = Math.round(metrics.co2Saved * 4.6); // km offset per kg CO2
+            metrics.homesYear = Math.round(monthlyConsumption * 12 / 3500); // Average Indian home: 3500 kWh/year
+            metrics.waterSaved = Math.round(dailyTotal * 2.5); // Liters per kWh saved
+            
+            // Max load from weekly data
+            metrics.maxLoad = Math.round(Math.max(...data.weeklyPeaks.map(d => d.value)));
+            
+            return metrics;
+        }
+
+        // Initialize charts with real data
+        function initializeCharts() {
+            const data = generateTimeSeriesData();
+            const metrics = calculateMetrics(data);
+            
+            try {
+                // Consumption Chart
+                const consumptionCtx = document.getElementById('consumptionChart');
+                if (consumptionCtx) {
+                    new Chart(consumptionCtx, {
+                        type: 'line',
+                        data: {
+                            labels: data.hourlyConsumption.map(d => d.label),
+                            datasets: [{
+                                label: 'Energy Consumption (kW)',
+                                data: data.hourlyConsumption.map(d => d.value),
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 2,
+                                pointHoverRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    min: 0,
+                                    max: 400,
+                                    grid: {
+                                        color: 'rgba(0,0,0,0.05)'
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return value + ' kW';
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `Power: ${Math.round(context.parsed.y)} kW`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Peak Load Chart
+                const peakLoadCtx = document.getElementById('peakLoadChart');
+                if (peakLoadCtx) {
+                    new Chart(peakLoadCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.weeklyPeaks.map(d => d.label),
+                            datasets: [{
+                                label: 'Peak Load (kW)',
+                                data: data.weeklyPeaks.map(d => d.value),
+                                backgroundColor: [
+                                    '#ef4444', '#f97316', '#eab308', '#22c55e', 
+                                    '#3b82f6', '#8b5cf6', '#ec4899'
+                                ],
+                                borderRadius: 8,
+                                borderSkipped: false
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    max: 350,
+                                    grid: {
+                                        color: 'rgba(0,0,0,0.05)'
+                                    },
+                                    ticks: {
+                                        callback: function(value) {
+                                            return value + ' kW';
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `Peak Load: ${Math.round(context.parsed.y)} kW`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Energy Mix Chart
+                const energyMixCtx = document.getElementById('energyMixChart');
+                if (energyMixCtx) {
+                    new Chart(energyMixCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Solar', 'Wind', 'Grid', 'Battery'],
+                            datasets: [{
+                                data: [
+                                    data.energyMix.solar,
+                                    data.energyMix.wind,
+                                    data.energyMix.grid,
+                                    data.energyMix.battery
+                                ],
+                                backgroundColor: ['#22c55e', '#3b82f6', '#eab308', '#8b5cf6'],
+                                borderWidth: 0,
+                                hoverOffset: 8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '60%',
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `${context.label}: ${Math.round(context.parsed)}%`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Update all metrics on page
+                updateDashboardMetrics(metrics, data);
+                
+                console.log('Dashboard initialized with real data:', metrics);
+                
+            } catch (error) {
+                console.error('Error initializing charts:', error);
+            }
+        }
+
+        // Update all dashboard metrics
+        function updateDashboardMetrics(metrics, data) {
+            // Update KPI cards
+            document.getElementById('currentConsumption').textContent = metrics.currentConsumption;
+            document.getElementById('renewablePercent').textContent = metrics.renewablePercent;
+            document.getElementById('renewableProgress').style.width = metrics.renewablePercent + '%';
+            document.getElementById('co2Saved').textContent = metrics.co2Saved.toLocaleString();
+            document.getElementById('budgetStatus').textContent = '₹' + metrics.monthlyCost.toLocaleString();
+            document.getElementById('systemEfficiency').textContent = metrics.systemEfficiency;
+            
+            // Update budget progress
+            const budgetTarget = 1200000; // ₹12 lakh monthly budget
+            const budgetPercent = (metrics.monthlyCost / budgetTarget) * 100;
+            document.getElementById('budgetPercent').textContent = Math.round(budgetPercent) + '% of budget';
+            document.getElementById('budgetProgress').style.width = Math.min(100, budgetPercent) + '%';
+            
+            // Update energy mix percentages
+            document.getElementById('solarPercent').textContent = Math.round(data.energyMix.solar) + '%';
+            document.getElementById('windPercent').textContent = Math.round(data.energyMix.wind) + '%';
+            document.getElementById('gridPercent').textContent = Math.round(data.energyMix.grid) + '%';
+            document.getElementById('batteryPercent').textContent = Math.round(data.energyMix.battery) + '%';
+            
+            // Update max load
+            document.getElementById('maxLoad').textContent = metrics.maxLoad + ' kW';
+            
+            // Update environmental metrics
+            document.getElementById('treesEquivalent').textContent = metrics.treesEquivalent.toLocaleString();
+            document.getElementById('carKmOffset').textContent = metrics.carKmOffset.toLocaleString();
+            document.getElementById('homesYear').textContent = metrics.homesYear;
+            document.getElementById('waterSaved').textContent = metrics.waterSaved.toLocaleString();
+            
+            // Update consumption trend
+            const trendValue = ((Math.random() - 0.5) * 10).toFixed(1);
+            const trendText = (trendValue >= 0 ? '+' : '') + trendValue + '%';
+            const trendElement = document.getElementById('consumptionTrend');
+            trendElement.textContent = trendText;
+            trendElement.className = trendValue >= 0 ? 
+                'text-sm font-medium metric-trend-up' : 
+                'text-sm font-medium metric-trend-down';
+            
+            // Update timestamp
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('en-IN');
+        }
+
+        // Alert system
+        function showAlert(message) {
+            const alertBanner = document.getElementById('alertBanner');
+            const alertMessage = document.getElementById('alertMessage');
+            if (alertBanner && alertMessage) {
+                alertMessage.textContent = message;
+                alertBanner.classList.remove('hidden');
+            }
+        }
+
+        function dismissAlert() {
+            const alertBanner = document.getElementById('alertBanner');
+            if (alertBanner) {
+                alertBanner.classList.add('hidden');
+            }
+        }
+
+        // Simulate real-time updates
+        function simulateRealTimeUpdates() {
+            // Generate new data every update
+            const data = generateTimeSeriesData();
+            const metrics = calculateMetrics(data);
+            
+            // Update only the metrics, not the charts (for performance)
+            updateDashboardMetrics(metrics, data);
+            
+            // Occasionally trigger alerts
+            if (Math.random() > 0.95) {
+                const alerts = [
+                    `High load detected: ${metrics.currentConsumption} kW (${Math.round((metrics.currentConsumption/500)*100)}% of capacity)`,
+                    `Renewable energy dipped to ${metrics.renewablePercent}% - Grid backup activated`,
+                    `Daily CO₂ savings target achieved: ${metrics.co2Saved} kg saved`,
+                    `System efficiency optimized to ${metrics.systemEfficiency}% - AI learning active`
+                ];
+                showAlert(alerts[Math.floor(Math.random() * alerts.length)]);
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing Smart Energy Dashboard with Indian units...');
+            console.log('Data Sources:', MOCK_DATA_CONFIG);
+            
+            // Initialize immediately
+            initializeCharts();
+            
+            // Update every 5 seconds for demo
+            setInterval(simulateRealTimeUpdates, 5000);
+            
+            // Auto-dismiss alerts after 8 seconds
+            let alertTimeout;
+            const originalShowAlert = showAlert;
+            showAlert = function(message) {
+                originalShowAlert(message);
+                clearTimeout(alertTimeout);
+                alertTimeout = setTimeout(dismissAlert, 8000);
+            };
+            
+            console.log('Dashboard ready with live data simulation');
+        });
+    </script>
+</body>
+</html>

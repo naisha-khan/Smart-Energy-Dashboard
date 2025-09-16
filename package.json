@@ -1,0 +1,77 @@
+{
+  "name": "smart-energy-dashboard",
+  "version": "1.0.0",
+  "description": "Enterprise-grade energy monitoring dashboard for industrial IoT analytics and sustainability tracking",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve .",
+    "dev": "npx live-server .",
+    "build": "echo 'No build process required - static HTML'",
+    "deploy": "vercel --prod",
+    "preview": "python -m http.server 8000"
+  },
+  "keywords": [
+    "energy-management",
+    "iot-dashboard",
+    "renewable-energy",
+    "sustainability",
+    "industrial-monitoring",
+    "smart-grid",
+    "carbon-tracking",
+    "power-analytics",
+    "schneider-electric",
+    "energy-efficiency"
+  ],
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com",
+    "url": "https://your-portfolio.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/smart-energy-dashboard.git"
+  },
+  "homepage": "https://your-deployment-url.vercel.app",
+  "bugs": {
+    "url": "https://github.com/yourusername/smart-energy-dashboard/issues"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "live-server": "^1.2.2",
+    "serve": "^14.2.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ],
+  "technologies": {
+    "frontend": [
+      "HTML5",
+      "CSS3",
+      "JavaScript ES6+",
+      "Chart.js",
+      "Tailwind CSS",
+      "Font Awesome"
+    ],
+    "features": [
+      "Real-time data visualization",
+      "Responsive design",
+      "IoT simulation",
+      "Energy analytics",
+      "Sustainability metrics",
+      "Alert system"
+    ],
+    "industry": [
+      "Energy Management",
+      "Industrial IoT",
+      "Renewable Energy",
+      "Smart Grid",
+      "Sustainability"
+    ]
+  }
+}
